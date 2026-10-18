@@ -1,0 +1,11 @@
+
+# Compiled Java files
+*.class
+bin/
+
+# Eclipse workspace metadata
+.metadata/
+
+# Operating system files
+.DS_Store
+Thumbs.db
