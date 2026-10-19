@@ -1,5 +1,5 @@
-package NetworkingProject;
 
+package NetworkingProject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,42 +20,71 @@ public class CityTycoonServer {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             System.out.println("Server is listening on port " + PORT);
-            System.out.println("Waiting for a player to connect...");
 
-            // Wait for a client connection
-            try (Socket clientSocket = serverSocket.accept();
-                 BufferedReader input = new BufferedReader(
-                     new InputStreamReader(
-                         clientSocket.getInputStream(),
-                         StandardCharsets.UTF_8));
-                 PrintWriter output = new PrintWriter(
-                     clientSocket.getOutputStream(), true,
-                     StandardCharsets.UTF_8)) {
+            while (true) {
 
-                System.out.println("A player has connected!");
+                System.out.println("Waiting for a player to connect...");
 
-                String message;
+                Socket clientSocket = serverSocket.accept();
 
-                // Read messages sent by the client
-                while ((message = input.readLine()) != null) {
+                System.out.println(
+                    "A player has connected: "
+                    + clientSocket.getRemoteSocketAddress()
+                );
 
-                    System.out.println("Client says: " + message);
+                Thread clientThread = new Thread(
+                    () -> handleClient(clientSocket)
+                );
 
-                    if (message.equalsIgnoreCase("exit")) {
-                        output.println("Goodbye from CityTycoon Server!");
-                        break;
-                    }
-
-                    // Send a response to the client
-                    output.println("Server received: " + message);
-                }
-
-                System.out.println("Client disconnected.");
+                clientThread.start();
             }
 
         } catch (IOException e) {
             System.err.println("Server error: " + e.getMessage());
         }
     }
-}
 
+    private static void handleClient(Socket clientSocket) {
+
+        try (
+            Socket socket = clientSocket;
+            BufferedReader input = new BufferedReader(
+                new InputStreamReader(
+                    socket.getInputStream(),
+                    StandardCharsets.UTF_8
+                )
+            );
+            PrintWriter output = new PrintWriter(
+                socket.getOutputStream(),
+                true,
+                StandardCharsets.UTF_8
+            )
+        ) {
+
+            String message;
+
+            while ((message = input.readLine()) != null) {
+
+                System.out.println(
+                    "Message from "
+                    + socket.getRemoteSocketAddress()
+                    + ": " + message
+                );
+
+                if (message.equalsIgnoreCase("exit")) {
+                    output.println("Goodbye from CityTycoon Server!");
+                    break;
+                }
+
+                output.println("Server received: " + message);
+            }
+
+        } catch (IOException e) {
+            System.err.println(
+                "Client connection error: " + e.getMessage()
+            );
+        }
+
+        System.out.println("A client disconnected.");
+    }
+}
