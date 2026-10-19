@@ -28,7 +28,7 @@ public class CityTycoonServer {
                 Socket clientSocket = serverSocket.accept();
 
                 System.out.println(
-                    "A player has connected: "
+                    "A client connected: "
                     + clientSocket.getRemoteSocketAddress()
                 );
 
@@ -61,22 +61,46 @@ public class CityTycoonServer {
             )
         ) {
 
-            String message;
+            String receivedText;
 
-            while ((message = input.readLine()) != null) {
+            while ((receivedText = input.readLine()) != null) {
 
-                System.out.println(
-                    "Message from "
-                    + socket.getRemoteSocketAddress()
-                    + ": " + message
-                );
+                System.out.println("Received: " + receivedText);
 
-                if (message.equalsIgnoreCase("exit")) {
-                    output.println("Goodbye from CityTycoon Server!");
-                    break;
+                try {
+                    Message request = Message.decode(receivedText);
+
+                    Message response;
+
+                    switch (request.getType()) {
+
+                        case JOIN:
+                            response = new Message(
+                                MessageType.JOIN_SUCCESS,
+                                "Welcome " + request.getContent()
+                            );
+                            break;
+
+                        default:
+                            response = new Message(
+                                MessageType.ERROR,
+                                "Unsupported message type: "
+                                + request.getType()
+                            );
+                            break;
+                    }
+
+                    output.println(response.encode());
+
+                } catch (IllegalArgumentException e) {
+
+                    Message error = new Message(
+                        MessageType.ERROR,
+                        "Invalid message format or type"
+                    );
+
+                    output.println(error.encode());
                 }
-
-                output.println("Server received: " + message);
             }
 
         } catch (IOException e) {

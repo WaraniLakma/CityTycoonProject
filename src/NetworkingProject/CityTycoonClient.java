@@ -1,5 +1,5 @@
-package NetworkingProject;
 
+package NetworkingProject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,46 +18,76 @@ public class CityTycoonClient {
 
         System.out.println("Connecting to CityTycoon Server...");
 
-        try (Socket socket = new Socket(HOST, PORT);
-             BufferedReader input = new BufferedReader(
-                 new InputStreamReader(
-                     socket.getInputStream(),
-                     StandardCharsets.UTF_8));
-             PrintWriter output = new PrintWriter(
-                 socket.getOutputStream(), true,
-                 StandardCharsets.UTF_8);
-             Scanner keyboard = new Scanner(System.in)) {
+        try (
+            Socket socket = new Socket(HOST, PORT);
+
+            BufferedReader input = new BufferedReader(
+                new InputStreamReader(
+                    socket.getInputStream(),
+                    StandardCharsets.UTF_8
+                )
+            );
+
+            PrintWriter output = new PrintWriter(
+                socket.getOutputStream(),
+                true,
+                StandardCharsets.UTF_8
+            );
+
+            Scanner keyboard = new Scanner(System.in)
+        ) {
 
             System.out.println("Connected successfully!");
-            System.out.println("Type a message, or type 'exit' to quit.");
 
-            while (true) {
+            System.out.print("Enter your player name: ");
+            String playerName = keyboard.nextLine().trim();
 
-                System.out.print("You: ");
-                String message = keyboard.nextLine();
+            if (playerName.isEmpty()
+                    || playerName.contains("|")
+                    || playerName.contains("\n")
+                    || playerName.contains("\r")) {
+                System.out.println("Invalid player name.");
+                return;
+            }
 
-                // Send a message to the server
-                output.println(message);
+            Message joinRequest = new Message(
+                MessageType.JOIN,
+                playerName
+            );
 
-                // Receive the server's response
-                String response = input.readLine();
+            output.println(joinRequest.encode());
 
-                if (response == null) {
-                    System.out.println("Server disconnected.");
-                    break;
-                }
+            String responseText = input.readLine();
 
-                System.out.println(response);
+            if (responseText == null) {
+                System.out.println("Server disconnected.");
+                return;
+            }
 
-                if (message.equalsIgnoreCase("exit")) {
-                    break;
-                }
+            try {
+                Message response = Message.decode(responseText);
+
+                System.out.println(
+                    "Server response type: " + response.getType()
+                );
+
+                System.out.println(
+                    "Server response: " + response.getContent()
+                );
+
+            } catch (IllegalArgumentException e) {
+                System.out.println(
+                    "Received an invalid server response."
+                );
             }
 
         } catch (IOException e) {
-            System.err.println("Client error: " + e.getMessage());
-            System.err.println("Make sure the server is running first.");
+            System.err.println(
+                "Client error: " + e.getMessage()
+            );
+            System.err.println(
+                "Make sure the server is running first."
+            );
         }
     }
 }
-
