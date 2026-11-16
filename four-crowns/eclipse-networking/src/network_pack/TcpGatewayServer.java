@@ -36,9 +36,7 @@ public final class TcpGatewayServer {
         System.out.println("Node game engine: http://localhost:" + NODE_PORT);
         System.out.println("ngrok command: ngrok http " + LISTEN_PORT);
         System.out.println("Keep Eclipse running during the match. Ctrl+C / Stop to shut down.");
-        Thread discovery = new Thread(UdpDiscoveryServer::runServer, "four-crowns-udp-discovery");
-        discovery.setDaemon(true);
-        discovery.start();
+        
 
         try (ServerSocket server = new ServerSocket()) {
             server.setReuseAddress(true);
